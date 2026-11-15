@@ -51,20 +51,28 @@ python app.py
 
 ## Результаты
 
-Тестовая выборка: 400 отзывов (20%, `random_state=42`, `stratify`).
+Тестовая выборка: 400 отзывов (20%, `random_state=42`, `stratify`), классы поровну (200 / 200).
 
-### Fine-tuned модель:
-- F1 (macro): 0.81
-- Accuracy: 0.81
+| Модель | F1 (macro) | Accuracy |
+|---|---|---|
+| Baseline: замороженный DistilBERT + LogisticRegression (День 4) | 0.7925 | 0.79 |
+| Fine-tuned DistilBERT (День 5) | 0.81 | 0.81 |
 
-### Baseline модель:
-- F1 (macro): X.XX
-- Accuracy: X.XX
+Улучшение F1: ≈ 2% (0.81 против 0.7925; fine-tuned округлён до двух знаков).
 
-Улучшение: XX%
+Подробно (precision / recall по классам):
 
-(Baseline — после `python train_tfidf_baseline.py` и `python transformers_day06.py`
-цифры берутся из `comparison_results.txt`. Embeddings-baseline Дня 4: macro F1 = 0.7925.)
+| | Baseline | | Fine-tuned | |
+|---|---|---|---|---|
+| Класс | precision | recall | precision | recall |
+| 0 (negative) | 0.80 | 0.79 | 0.79 | 0.85 |
+| 1 (positive) | 0.79 | 0.80 | 0.84 | 0.78 |
+
+Выводы:
+- Дообучение всего трансформера дало небольшой, но реальный прирост над замороженными эмбеддингами.
+- Baseline симметричен по классам (0.79 / 0.79). Fine-tuned чаще находит негативные отзывы (recall 0.85), но реже ловит позитивные (0.78).
+- Возможные причины скромного прироста: всего 1600 обучающих отзывов, 3 эпохи, а `max_length=128` обрезает длинные отзывы (вердикт часто стоит в конце).
+- Сравнение с TF-IDF baseline (`train_tfidf_baseline.py`) см. в `comparison_results.txt` после запуска Дня 6.
 
 ## Использование в коде
 
@@ -157,6 +165,13 @@ pred = torch.argmax(outputs.logits, dim=1)  # 0 — negative, 1 — positive
 - Разбиение 80/20, `stratify=y`, `random_state=42`.
 - Метрики: `classification_report` и macro F1; результат сохраняется в `baseline_results.txt`.
 - Классификатор назван `clf`, чтобы не затереть трансформер `model`.
+
+Результаты запуска на 2000 отзывах IMDB:
+
+- `tokenize_texts` на 3 примерах: форма `[3, 9]`, короткий текст добит `[PAD]` (в `attention_mask` — нули).
+- `get_cls_embeddings`: форма `(3, 768)`; для всего датасета — `(2000, 768)`.
+- Логистическая регрессия на 400 тестовых отзывах: accuracy 0.79, **macro F1 = 0.7925** (классы 0 и 1 — по 0.79).
+- Это точка отсчёта (baseline) для сравнения с fine-tuned моделью.
 
 ### Датасет для Дня 4
 
