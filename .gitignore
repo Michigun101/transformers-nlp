@@ -2,3 +2,13 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+figures/
+baseline_results.txt
+data/dataset.csv
+fine_tuned_model/
+fine_tuned_results.txt
+baseline_model.pkl
+comparison_results.txt
+confusion_matrix_finetuned.png
+vectorizer.pkl
+error_analysis.txt
